@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.js"></script>
+  <script> var available_keywords = {{available_keywords|safe}}; </script>
+  <script type=text/javascript src="{{url_for('static', filename='confirm.js')}}"></script>
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font: 16px Arial;
+  }
+
+  /*the container must be positioned relative:*/
+  .autocomplete {
+    position: relative;
+    display: inline-block;
+  }
+
+  input {
+    border: 1px solid transparent;
+    background-color: #f1f1f1;
+    padding: 10px;
+    font-size: 16px;
+  }
+
+  input[type=text] {
+    background-color: #f1f1f1;
+    width: 100%;
+  }
+
+  input[type=submit] {
+    background-color: DodgerBlue;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .autocomplete-items {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    border-bottom: none;
+    border-top: none;
+    z-index: 99;
+    /*position the autocomplete items to be the same width as the container:*/
+    top: 100%;
+    left: 0;
+    right: 0;
+  }
+
+  .autocomplete-items div {
+    padding: 10px;
+    cursor: pointer;
+    background-color: #fff;
+    border-bottom: 1px solid #d4d4d4;
+  }
+
+  /*when hovering an item:*/
+  .autocomplete-items div:hover {
+    background-color: #e9e9e9;
+  }
+
+  /*when navigating through the items using the arrow keys:*/
+  .autocomplete-active {
+    background-color: DodgerBlue !important;
+    color: #ffffff;
+  }
+  </style>
+</head>
+
+
+<body>
+Please modify and submit the metadata:<br>
+<form id="form" autocomplete="off" action="/_confirm" method="post" enctype="multipart/form-data">
+  <label for="bibtex">Bibtex: </label><br>
+  <textarea name="bibtex" rows="10" cols="100">{{bibtex}}</textarea><br>
+
+  <label for="title">Title: </label>
+  <input type="text" name="title" value="{{title}}"><br>
+
+  <label for="title">Author: </label>
+  <input type="text" name="author" value="{{author}}"><br>
+
+  <label for="title">booktitle: </label>
+  <input type="text" name="booktitle" value="{{booktitle}}"><br>
+
+  <label for="title">Year: </label>
+  <input type="text" name="year" value="{{year}}"><br>
+
+  <label for="title">Keywords: </label><br>
+  <table id="keywords">
+  </table>
+  <input type="button" value="AddNewKeyword" class="add" id="add" onclick="addNewKeyword()"/><br>
+
+  <input type="submit" value="Submit" name="submit">
+</form>
+
+</body>
+</html>
