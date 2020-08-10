@@ -1,4 +1,6 @@
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request, redirect, render_template, send_from_directory
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash, check_password_hash
 import pymongo
 import bibtexparser
 # from scholarly import scholarly
@@ -12,14 +14,32 @@ db = client['literature']
 literature = db['literature']
 # keywords = db['keywords']
 
-Work = namedtuple('Work', ['title', 'bibtex', 'keywords', 'author', 'booktitle', 'year'])
+# Work = namedtuple('Work', ['title', 'bibtex', 'keywords', 'author', 'booktitle', 'year'])
 
 app = Flask(__name__)
+auth = HTTPBasicAuth()
+
+with open('passwd') as f:
+    passwd = f.readlines()
+
+# import ipdb; ipdb.set_trace()
+
+users = {
+    passwd[0].strip(): generate_password_hash(passwd[1].strip())
+}
+
+@auth.verify_password
+def verify_password(username, password):
+    if username in users and \
+            check_password_hash(users.get(username), password):
+        return username
 
 @app.route('/_confirm', methods = ['POST'])
+@auth.login_required
 def _confirm():
     bibtex = request.form['bibtex']
     title = request.form['title']
+    fname = request.form['fname']
     author = request.form['author']
     booktitle = request.form['booktitle']
     year = request.form['year']
@@ -33,12 +53,13 @@ def _confirm():
     # view_url = view_url.split(':')[1][1:]
     # download_url = download_url.split(':')[1][1:]
     # save to db
-    w = {'title':title, 'bibtex':bibtex, 'keywords':keywords, 'author':author.split(' and '), 'booktitle':booktitle, 'year':year}
+    w = {'fname':fname, 'title':title, 'bibtex':bibtex, 'keywords':keywords, 'author':author.split(' and '), 'booktitle':booktitle, 'year':year}
     literature.insert_one(w)
 
-    return redirect('/createnew')
+    return redirect('/create')
 
 @app.route('/_createnew', methods = ['POST'])
+@auth.login_required
 def _createnew():
     file = request.files['fileToUpload']
 
@@ -72,12 +93,25 @@ def _createnew():
     available_keywords = list(set(sum([w['keywords'] for w in literature.find({})], [])))
 
     # extracted info
-    return render_template('confirm.html', bibtex=bibtex, title=title, author=author, booktitle=booktitle, year=year, available_keywords=json.dumps(available_keywords))
+    return render_template('confirm.html', fname=fname, bibtex=bibtex, title=title, author=author, booktitle=booktitle, year=year, available_keywords=json.dumps(available_keywords))
 
-@app.route('/createnew')
-def createnew():
-    return render_template('createnew.html')
+@app.route('/create')
+@auth.login_required
+def create():
+    return render_template('create.html')
+
+@app.route('/search')
+@auth.login_required
+def search():
+    references = [{'fname':w['fname'], 'title':w['title'], 'bibtex':w['bibtex'], 'keywords':w['keywords'], 'author':w['author'], 'booktitle':w['booktitle'], 'year':w['year']} for w in literature.find({})]
+    return render_template('search.html', references = json.dumps(references))
 
 @app.route('/')
+@auth.login_required
 def hello_world():
     return 'Hello, World!'
+
+@app.route('/upload/<path:path>')
+@auth.login_required
+def send_uploaded_files(path):
+    return send_from_directory('upload', path)
