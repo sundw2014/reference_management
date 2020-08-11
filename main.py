@@ -63,7 +63,7 @@ def _confirm():
 def _createnew():
     file = request.files['fileToUpload']
 
-    # title = request.form['title']
+    title = request.form['title']
     bibtex = request.form['bibtex']
     # from IPython import embed;embed()
     # import ipdb; ipdb.set_trace()
@@ -71,17 +71,30 @@ def _createnew():
     #     query = scholarly.search_pubs(title)
     #     pub = next(query)
     #     bibtex = pub.bibtex
-    parsed_bibtex = bibtexparser.loads(bibtex).entries[0]
-    title = parsed_bibtex['title']
-    author = parsed_bibtex['author']
-    booktitle = None
+    parsed_bibtex = bibtexparser.loads(bibtex).entries
+    if len(parsed_bibtex) > 0:
+        parsed_bibtex = parsed_bibtex[0]
+    else:
+        parsed_bibtex = {}
+
+    if 'title' in parsed_bibtex:
+        title = parsed_bibtex['title']
+    if 'author' in parsed_bibtex:
+        author = parsed_bibtex['author']
+    else:
+        author = None
     if 'booktitle' in parsed_bibtex:
         booktitle = parsed_bibtex['booktitle']
     elif 'journal' in parsed_bibtex:
         booktitle = parsed_bibtex['journal']
     elif 'publisher' in parsed_bibtex:
         booktitle = parsed_bibtex['publisher']
-    year = parsed_bibtex['year']
+    else:
+        booktitle = None
+    if 'year' in parsed_bibtex:
+        year = parsed_bibtex['year']
+    else:
+        year = None
 
     # save
     fname = 'upload/' + title+'.pdf'
